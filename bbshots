@@ -84,8 +84,7 @@ fi
 
 browser_screenshot() {
     browser=$1
-    url=$_url
-    
+
     # Start browser
     $browser $url &
 
@@ -94,22 +93,22 @@ browser_screenshot() {
     # Maximize window
     wmctrl -r $browser -b add,fullscreen
     
+    sleep 5
+    
     # Send standard 'Full screen' key
     xdotool key "F11"
     
-    sleep 10
+    sleep 5
 
     # Take screenshot
-    import -window root $browser-$(date +"%y-%m-%d_%T").png
+    import -window root $browser-$(date +"%y%m%d_%k%M%S").png
 
     # Exit gracefully
     wmctrl -c $browser
-    # pkill $browser
 }
 
 
 $start_xserver &
-
 sleep 10
 $winmgr &
 sleep 10
@@ -117,9 +116,11 @@ sleep 10
 for browser in "${browsers[@]}"
 do
     if ! which $browser > /dev/null 2>&1 ; then
-        echo "Unable to find $browser, proceeding."
-#        continue
+        echo "Unable to find $browser, trying next one."
     else
-        echo "Launch $browser."
+        browser_screenshot $browser
     fi
 done
+
+pkill $winmgr
+pkill $xserver
