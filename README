@@ -1,0 +1,14 @@
+Various helper scripts for cross browser web development.
+
+
+bbshots
+
+Bash script to launch a number of browsers and save a screenshot for each one. 
+
+Usage: bbshots [-b browsers] [-u url] [-h help]
+ -h   this help
+ -b   comma separated list of browsers to use/try
+ -u   url to open
+
+Example:
+ bbshots -b firefox,opera -u http://example.com
