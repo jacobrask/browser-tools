@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Define default settings
+default_browsers="arora,google-chrome,chromium,epiphany,firefox,konqueror,opera"
+xserver=Xvfb
+winmgr=icewm
+vp_width=1280
+vp_height=2500
+displayno=5
+start_xserver="$xserver :$displayno -screen 0 ${vp_width}x${vp_height}x24"
+prog=$0
+required_apps=('wmctrl' 'xdotool' $xserver $winmgr)
+# Use a comma separated list to build the browsers array.
+define_browsers() {
+    unset browsers
+    SAVE_IFS=$IFS
+    IFS=","
+    browsers=($@)
+    browserlist="${browsers[*]}"
+    IFS=$SAVE_IFS
+}
+
+# Build default list of browsers
+define_browsers $default_browsers
+
+# Call this to exit if we're missing something. 
+require_apps() {
+    for app in ${required_apps[@]}
+    do
+        if ! which $app > /dev/null 2>&1 ; then
+            echo "$app is required to run $prog."
+            exit 1
+        fi
+    done
+}
+
+# Set DISPLAY for all future application starts
+export DISPLAY=:$displayno
+
+usage() {
+    echo "Usage: $prog [-b browsers] [-u url] [-h help]"
+    echo " -h   this help"
+    echo " -b   comma separated list of browsers to use/try"
+    echo "      (default: $browserlist)"
+    echo " -u   url to open in browsers"
+    echo
+    echo " Open the specified URL in a number of web browsers, "
+    echo " run in a separate X server, and save screenshots."
+    echo
+    echo "Example:"
+    echo " $prog -b firefox,opera -u http://example.com"
+}
+
+while getopts ":u:b:h" optname; do
+    case "$optname" in
+        u)
+            url=$OPTARG
+            echo "Will open URL $OPTARG"
+            ;;
+        b)
+            define_browsers "$OPTARG"
+            ;;
+        h)
+            usage
+            exit
+            ;;
+       \?)
+            echo "Invalid option -$OPTARG. $prog -h for instructions." >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument. $prog -h for instructions." >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$url" ]]; then
+    echo "You have to specify an URL. Try $prog -h for usage instructions." >&2
+    exit 1;
+else
+    require_apps
+fi
+
+browser_screenshot() {
+    browser=$1
+    url=$_url
+    
+    # Start browser
+    $browser $url &
+
+    sleep 10
+
+    # Maximize window
+    wmctrl -r $browser -b add,fullscreen
+    
+    # Send standard 'Full screen' key
+    xdotool key "F11"
+    
+    sleep 10
+
+    # Take screenshot
+    import -window root $browser-$(date +"%y-%m-%d_%T").png
+
+    # Exit gracefully
+    wmctrl -c $browser
+    # pkill $browser
+}
+
+
+$start_xserver &
+
+sleep 10
+$winmgr &
+sleep 10
+
+for browser in "${browsers[@]}"
+do
+    if ! which $browser > /dev/null 2>&1 ; then
+        echo "Unable to find $browser, proceeding."
+#        continue
+    else
+        echo "Launch $browser."
+    fi
+done
