@@ -9,7 +9,7 @@ vp_height=2500
 displayno=5
 start_xserver="$xserver :$displayno -screen 0 ${vp_width}x${vp_height}x24"
 prog=$0
-required_apps=('wmctrl' 'xdotool' $xserver $winmgr)
+required_apps=('wmctrl' 'xdotool' 'import' 'pkill' $xserver $winmgr)
 # Use a comma separated list to build the browsers array.
 define_browsers() {
     unset browsers
